@@ -10,20 +10,47 @@ const SimpleTable = () => {
   const [isModalVisible, setIsModalVisible] = useState(false); // State để điều khiển hiển thị modal
   const [editingUser, setEditingUser] = useState(null); // Lưu thông tin người dùng đang chỉnh sửa
   const [form] = Form.useForm(); // Form của Ant Design
+  const [searchId, setSearchId] = useState("");
 
   // Lấy dữ liệu từ API
   useEffect(() => {
     fetchData();
   }, []);
 
+  //Lấy danh sách người dùng
   const fetchData = async () => {
     try {
       const response = await testAPI.getListUser();
+      console.log(response.data);
       setData(response.data);
       showNotification("Get data successfully!", "success");
     } catch (err) {
       console.log(err);
       showNotification("Get data failed!", "error");
+    }
+  };
+
+  //Lấy người dùng bằng Id
+  const handleSearch = async (id) => {
+    if (!id.trim()) {
+      // Kiểm tra nếu ô tìm kiếm trống hoặc chỉ chứa khoảng trắng
+      fetchData();
+      return;
+    }
+
+    try {
+      const res = await testAPI.getUserById(id);
+      if (res.data) {
+        setData([res.data]); // Cập nhật bảng với kết quả tìm thấy
+        showNotification("User found!", "success");
+      } else {
+        showNotification("User not found!", "warning");
+        setData([]); // Xóa dữ liệu nếu không tìm thấy
+      }
+    } catch (err) {
+      console.log(err);
+      showNotification("Search failed!", "error");
+      setData([]); // Xóa dữ liệu nếu có lỗi xảy ra
     }
   };
 
@@ -45,7 +72,7 @@ const SimpleTable = () => {
     try {
       if (editingUser) {
         // Gọi API để cập nhật thông tin người dùng
-        await testAPI.updateUser(editingUser.userId, values);
+        await testAPI.updateUser(editingUser.id, values);
         showNotification("Update successfully!", "success");
       } else {
         // Gọi API để thêm người dùng mới
@@ -62,11 +89,11 @@ const SimpleTable = () => {
   };
 
   // Xử lý xóa người dùng
-  const handleDelete = async (userId) => {
+  const handleDelete = async (id) => {
     try {
-      await testAPI.deleteUser(userId);
+      await testAPI.deleteUser(id);
       showNotification("Delete successfully!", "success");
-      setData(data.filter((item) => item.userId !== userId)); // Cập nhật lại danh sách
+      setData(data.filter((item) => item.id !== id)); // Cập nhật lại danh sách
     } catch (err) {
       console.log(err);
       showNotification("Delete failed!", "error");
@@ -76,19 +103,24 @@ const SimpleTable = () => {
   // Cột của bảng
   const columns = [
     {
-      title: "User ID",
-      dataIndex: "userId",
-      key: "userId",
+      title: "id",
+      dataIndex: "id",
+      key: "id",
     },
     {
-      title: "Username",
-      dataIndex: "username",
-      key: "username",
+      title: "Tên",
+      dataIndex: "ten",
+      key: "ten",
     },
     {
-      title: "Email",
-      dataIndex: "email",
-      key: "email",
+      title: "Lớp",
+      dataIndex: "lop",
+      key: "lop",
+    },
+    {
+      title: "MSSV",
+      dataIndex: "mssv",
+      key: "mssv",
     },
     {
       title: "Action",
@@ -104,7 +136,7 @@ const SimpleTable = () => {
           </Button>
           <Popconfirm
             title="Are you sure to delete this task?"
-            onConfirm={() => handleDelete(record.userId)}
+            onConfirm={() => handleDelete(record.id)}
             okText="Yes"
             cancelText="No"
           >
@@ -123,8 +155,35 @@ const SimpleTable = () => {
   ];
 
   return (
-    <div className="">
-      <h1 className=" text-center text-5xl">Danh Sách Người dùng</h1>
+    <div className=" my-6">
+      <h1 className=" text-center text-5xl">
+        Danh Sách Thành Viên Nhóm 7 Thứ 6 Ca 1
+      </h1>
+      <div className="text-center mb-3 flex justify-center gap-2">
+        <Input
+          placeholder="Enter User ID"
+          value={searchId}
+          onChange={(e) => setSearchId(e.target.value)}
+          style={{ width: "200px" }}
+        />
+        <Button
+          type="primary"
+          onClick={() => {
+            handleSearch(searchId);
+          }}
+        >
+          Tìm kiếm
+        </Button>
+        <Button
+          // type="danger"
+          danger
+          onClick={() => {
+            fetchData();
+          }}
+        >
+          Lấy tất cả người dùng
+        </Button>
+      </div>
       <div className="text-center mb-3 ">
         <Button
           type="primary"
@@ -142,7 +201,7 @@ const SimpleTable = () => {
       <Table
         columns={columns}
         dataSource={data}
-        rowKey="userId"
+        rowKey="id"
         pagination={{ pageSize: 7 }}
       />
 
@@ -155,16 +214,23 @@ const SimpleTable = () => {
       >
         <Form form={form} onFinish={handleSubmit} layout="vertical">
           <Form.Item
-            label="Username"
-            name="username"
-            rules={[{ required: true, message: "Please enter username" }]}
+            label="Tên"
+            name="ten"
+            rules={[{ required: true, message: "Please enter ten" }]}
           >
             <Input />
           </Form.Item>
           <Form.Item
-            label="Email"
-            name="email"
-            rules={[{ required: true, message: "Please enter email" }]}
+            label="Lop"
+            name="lop"
+            rules={[{ required: true, message: "Please enter lop" }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            label="MSSV"
+            name="mssv"
+            rules={[{ required: true, message: "Please enter mssv" }]}
           >
             <Input />
           </Form.Item>
